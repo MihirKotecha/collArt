@@ -1,3 +1,4 @@
+import { JWT_TOKEN } from "@repo/backend-common/config";
 import { WebSocketServer } from "ws";
 import jwt  from "jsonwebtoken";
 
@@ -12,7 +13,7 @@ wss.on("connection", (ws,request) => {
 
   const urlParams = new URLSearchParams(url.split("?")[1]);
   const token = urlParams.get("token");
-  const decoded = jwt.verify(token || "", "123");
+  const decoded = jwt.verify(token || "", JWT_TOKEN);
   
   if(typeof decoded === 'string'){
     ws.close(1008, "Invalid token");
