@@ -4,19 +4,21 @@
   "description": "",
   "main": "index.js",
   "exports": {
-    "./dbClient": "./src/dbClient.ts"
+    "./client" : "./src/index.ts"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.15.3",
+    "prisma": "^6.12.0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "packageManager": "pnpm@10.13.1",
   "dependencies": {
-    "@prisma/client": "6.12.0",
-    "prisma": "^6.12.0"
+    "@prisma/client": "^6.12.0"
   }
 }
