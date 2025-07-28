@@ -2,7 +2,11 @@ import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { authMidddleWare } from "./middleware";
 import { JWT_TOKEN } from "@repo/backend-common/config";
-import { SignInSchema, SignUpSchema } from "@repo/common/types";
+import {
+  CreateRoomSchema,
+  SignInSchema,
+  SignUpSchema,
+} from "@repo/common/types";
 import { dbClient } from "@repo/db/client";
 
 const app = express();
@@ -59,10 +63,36 @@ app.post("/signin", async (req, res) => {
   }
 });
 
-app.post("/room", authMidddleWare, (req, res) => {
-  res.json({
-    roomId: "123",
-  });
+app.post("/room", authMidddleWare, async (req, res) => {
+  const parsedData = CreateRoomSchema.safeParse(req.body);
+
+  if (!parsedData.success) {
+    res.status(400).json({
+      message: "Invalid room data",
+    });
+    return;
+  }
+  //@ts-ignore
+  const userId = req.userId;
+  console.log("User ID from middleware:", userId);
+
+  try {
+    const room = await dbClient.room.create({
+      data: {
+        slug: parsedData.data.name,
+        adminId: userId,
+      },
+    });
+    res.json({
+      roomId: room.id,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Internal server error",
+    });
+    console.error("Error creating room:", error);
+    return;
+  }
 });
 
 app.listen(4000, () => {
