@@ -67,7 +67,26 @@ wss.on("connection", (ws,request) => {
       }
     }
 
-    if(message.type === "leaveRoom"){
+    if(result.data.type === "leaveRoom"){
+      const room = result.data.roomId;
+      const user = users.find(u => u.ws === ws);
+
+      if(!room){
+        ws.send("Room ID is required");
+        return;
+      }
+
+      if(user && user.rooms.includes(room)){
+        user.rooms.filter(id => id === room);
+        ws.send(`Left room: ${room}`)        
+      }
+      else{
+        ws.send(`User is not in the room: ${room}`)
+      }
+    }
+
+    if(result.data.type === "chat"){
+      const room = result.data.roomId;
       
     }
   });
