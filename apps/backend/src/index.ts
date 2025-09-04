@@ -28,14 +28,14 @@ app.post("/signup", async (req: Request, res: Response) => {
       },
     });
     console.log("User created:", user);
+    const token = jwt.sign({userId : user.id}, JWT_TOKEN);
+    res.json({
+      token,
+    });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     return;
   }
-  const token = jwt.sign(result, JWT_TOKEN);
-  res.json({
-    token,
-  });
 });
 
 app.post("/signin", async (req, res) => {
@@ -55,7 +55,7 @@ app.post("/signin", async (req, res) => {
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
-    const token = jwt.sign({ email: user.email }, JWT_TOKEN);
+    const token = jwt.sign({userId : user.id}, JWT_TOKEN);
     res.json({ token });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
