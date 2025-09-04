@@ -2,6 +2,7 @@ import { JWT_TOKEN } from "@repo/backend-common/config";
 import {WsServerMessageSchema} from "@repo/common/types";
 import { WebSocketServer, WebSocket } from "ws";
 import jwt  from "jsonwebtoken";
+import { addToQueue } from "./queue";
 
 interface User {
   id: string;
@@ -56,9 +57,15 @@ wss.on("connection", (ws,request) => {
       return;
     }
 
-    if(message.type === "joinRoom") {
-      const room = message.room;
+    if(result.data.type === "joinRoom") {
+      const room = result.data.roomId;
       const user = users.find(u => u.ws === ws);
+
+      if(room==null){
+        ws.send('Missing room id');
+        return;
+      }
+
       if (user && !user.rooms.includes(room)) {
         user.rooms.push(room);
         ws.send(`Joined room: ${room}`);
@@ -86,8 +93,15 @@ wss.on("connection", (ws,request) => {
     }
 
     if(result.data.type === "chat"){
-      const room = result.data.roomId;
+      const room = result.data.roomId ;
+      const chat = result.data.chat;
+
+      if(room == null || chat == null){
+        ws.send('Invalid Content');
+        return;
+      }
       
+      addToQueue({chat:chat,userId:userId,roomId:room})
     }
   });
 
