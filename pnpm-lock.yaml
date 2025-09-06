@@ -46,6 +46,25 @@ importers:
         specifier: ^9.0.10
         version: 9.0.10
 
+  apps/chat-worker:
+    dependencies:
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@repo/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+      bullmq:
+        specifier: ^5.58.4
+        version: 5.58.4
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
+
   apps/web:
     dependencies:
       '@repo/ui':
@@ -88,6 +107,9 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@repo/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
       '@types/jsonwebtoken':
         specifier: ^9.0.10
         version: 9.0.10
@@ -185,6 +207,19 @@ importers:
       typescript-eslint:
         specifier: ^8.35.0
         version: 8.35.0(eslint@9.30.0(jiti@2.4.2))(typescript@5.8.2)
+
+  packages/queue:
+    dependencies:
+      bullmq:
+        specifier: ^5.58.4
+        version: 5.58.4
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: ^22.15.3
+        version: 22.15.3
 
   packages/typescript-config: {}
 
