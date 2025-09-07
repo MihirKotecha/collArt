@@ -28,11 +28,12 @@ app.post("/signup", async (req: Request, res: Response) => {
       },
     });
     console.log("User created:", user);
-    const token = jwt.sign({userId : user.id}, JWT_TOKEN);
+    const token = jwt.sign({ userId: user.id }, JWT_TOKEN);
     res.json({
       token,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: "Internal server error" });
     return;
   }
@@ -55,7 +56,7 @@ app.post("/signin", async (req, res) => {
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
-    const token = jwt.sign({userId : user.id}, JWT_TOKEN);
+    const token = jwt.sign({ userId: user.id }, JWT_TOKEN);
     res.json({ token });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -92,6 +93,25 @@ app.post("/room", authMidddleWare, async (req, res) => {
     });
     console.error("Error creating room:", error);
     return;
+  }
+});
+
+app.get("/chat/:roomId", authMidddleWare, async (req, res) => {
+  const roomId = req.params.roomId;
+
+  try {
+    const chatHistory = await dbClient.chat.findMany({
+      where: {
+        roomId: roomId,
+      },
+    });
+    res.json({
+      chats: chatHistory
+    });
+  } catch (error) {
+    res.status(500).json({
+      message : "Internal Server Error"
+    });
   }
 });
 

@@ -15,7 +15,7 @@ export const authMidddleWare = async (
   if (decoded && typeof decoded !== "string") {
     try {
       const user = await dbClient.user.findUnique({
-        where: { email: decoded.email },
+        where: { id : decoded.userId},
       });
       if (user) {
         //@ts-ignore
