@@ -104,6 +104,10 @@ app.get("/chat/:roomId", authMidddleWare, async (req, res) => {
       where: {
         roomId: roomId,
       },
+      orderBy: {
+        id : 'desc'
+      },
+      take : 50
     });
     res.json({
       chats: chatHistory
