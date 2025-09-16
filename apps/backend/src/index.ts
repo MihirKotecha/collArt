@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import cors from "cors";
 import { authMidddleWare } from "./middleware";
 import { JWT_TOKEN } from "@repo/backend-common/config";
 import {
@@ -12,6 +13,7 @@ import { dbClient } from "@repo/db/client";
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.post("/signup", async (req: Request, res: Response) => {
   const result = SignUpSchema.safeParse(req.body);
