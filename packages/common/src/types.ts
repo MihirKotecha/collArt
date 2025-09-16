@@ -20,3 +20,13 @@ export const WsServerMessageSchema = z.object({
   roomId: z.string().optional(),
   chat: z.string().optional(),
 })
+
+export const RectSchema = z.object({
+  type : z.literal("rect"),
+  x : z.number(),
+  y : z.number(),
+  width : z.number(),
+  height : z.number(),
+})
+
+export type RectSchemaType = z.infer<typeof RectSchema>

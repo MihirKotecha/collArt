@@ -1,12 +1,13 @@
-type Shapes = {
-  type: "rect";
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+import { getPastDrawings } from "@/lib/apiClient";
+import { RectSchemaType } from "@repo/common/types";
 
-export const initDraw = (canvas: HTMLCanvasElement) => {
+type Shapes = RectSchemaType;
+
+export const initDraw = async (
+  canvas: HTMLCanvasElement,
+  roomId: string,
+  socket: WebSocket
+) => {
   const ctx = canvas.getContext("2d");
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -19,19 +20,24 @@ export const initDraw = (canvas: HTMLCanvasElement) => {
   let startY = 0;
   let clicked = false;
 
-  let existingShapes: Shapes[] = [];
+  let existingShapes: Shapes[] = await getPastDrawings(roomId);
+  clearCanvas(ctx,canvas,existingShapes)
+
+  socket.onmessage = (event) => {
+    console.log(event.data);
+    const message = JSON.parse(event.data);
+
+    if(message.type === "chat"){
+      const shape = JSON.parse(message.chat);
+      existingShapes.push(shape);
+      clearCanvas(ctx,canvas,existingShapes);
+    }
+  }
 
   window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    ctx.fillStyle = "rgba(0,0,0)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = "#fff";
-    existingShapes.forEach((shape) => {
-      if (shape.type === "rect") {
-        ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-      }
-    });
+    clearCanvas(ctx,canvas,existingShapes)
   });
 
   canvas.addEventListener("mousedown", (e) => {
@@ -44,14 +50,7 @@ export const initDraw = (canvas: HTMLCanvasElement) => {
     if (clicked) {
       const width = e.clientX - startX;
       const height = e.clientY - startY;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "rgba(0,0,0)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      existingShapes.forEach((shape) => {
-        if (shape.type === "rect") {
-          ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-        }
-      });
+      clearCanvas(ctx,canvas,existingShapes)
       ctx.strokeStyle = "#fff";
       ctx.strokeRect(startX, startY, width, height);
     }
@@ -61,12 +60,35 @@ export const initDraw = (canvas: HTMLCanvasElement) => {
     clicked = false;
     const width = e.clientX - startX;
     const height = e.clientY - startY;
-    existingShapes.push({
+    const shape : RectSchemaType = {
       type: "rect",
       x: startX,
       y: startY,
       width,
       height,
-    });
+    }
+    existingShapes.push(shape);
+
+    socket.send(JSON.stringify({
+      type : "chat",
+      roomId,
+      chat : JSON.stringify(shape)
+    }))
+  });
+};
+
+const clearCanvas = (
+  ctx: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  existingShapes: Shapes[]
+) => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "rgba(0,0,0)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#fff";
+  existingShapes.forEach((shape) => {
+    if (shape.type === "rect") {
+      ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+    }
   });
 };
