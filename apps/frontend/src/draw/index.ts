@@ -19,6 +19,7 @@ export const initDraw = async (
   let startX = 0;
   let startY = 0;
   let clicked = false;
+  let rectRadius = 20;
 
   let existingShapes: Shapes[] = await getPastDrawings(roomId);
   clearCanvas(ctx,canvas,existingShapes)
@@ -83,7 +84,7 @@ const clearCanvas = (
   existingShapes: Shapes[]
 ) => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "rgba(0,0,0)";
+  ctx.fillStyle = "#121212";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.strokeStyle = "#fff";
   existingShapes.forEach((shape) => {
