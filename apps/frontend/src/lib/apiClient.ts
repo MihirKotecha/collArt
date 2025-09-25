@@ -9,7 +9,6 @@ export const getPastDrawings = async (roomId: string): Promise<RectSchemaType[]>
     },
   });
 
-  console.log(response.data.chats);
   const existingShapes = response.data.chats.map((chat:any) => {
     const shapeData = JSON.parse(chat.message);
     return shapeData;
