@@ -30,3 +30,17 @@ export const RectSchema = z.object({
 })
 
 export type RectSchemaType = z.infer<typeof RectSchema>
+
+
+export const EllipseSchema = z.object({
+  type: z.literal("ellipse"),
+  x: z.number(), // center x
+  y: z.number(), // center y
+  radiusX: z.number(),
+  radiusY: z.number(),
+  rotation: z.number(), // in radians
+  startAngle: z.number(), // in radians
+  endAngle: z.number(), // in radians
+});
+
+export type EllipseSchemaType = z.infer<typeof EllipseSchema> 
