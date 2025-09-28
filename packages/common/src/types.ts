@@ -16,21 +16,18 @@ export const CreateRoomSchema = z.object({
 });
 
 export const WsServerMessageSchema = z.object({
-  type: z.enum(["joinRoom","leaveRoom","chat"]),
+  type: z.enum(["joinRoom", "leaveRoom", "chat"]),
   roomId: z.string().optional(),
   chat: z.string().optional(),
-})
+});
 
 export const RectSchema = z.object({
-  type : z.literal("rect"),
-  x : z.number(),
-  y : z.number(),
-  width : z.number(),
-  height : z.number(),
-})
-
-export type RectSchemaType = z.infer<typeof RectSchema>
-
+  type: z.literal("rect"),
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+});
 
 export const EllipseSchema = z.object({
   type: z.literal("ellipse"),
@@ -43,4 +40,14 @@ export const EllipseSchema = z.object({
   endAngle: z.number(), // in radians
 });
 
-export type EllipseSchemaType = z.infer<typeof EllipseSchema> 
+export const LineSchema = z.object({
+  type: z.literal("line"),
+  x: z.number(),
+  y: z.number(),
+  endX: z.number(),
+  endY: z.number(),
+});
+
+export type RectSchemaType = z.infer<typeof RectSchema>;
+export type EllipseSchemaType = z.infer<typeof EllipseSchema>;
+export type LineSchemaType = z.infer<typeof LineSchema>;
