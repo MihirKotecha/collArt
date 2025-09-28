@@ -109,7 +109,7 @@ export const CanvasComponent: React.FC<canvasComponentProps> = ({ roomId }) => {
                     </svg>
                 </button>
             </div>
-            <canvas ref={canvasRef} className="w-screen h-screen" />
+            <canvas ref={canvasRef} className="w-screen h-screen cursor-crosshair" />
         </div>
     );
 };

@@ -1,12 +1,12 @@
 import { Tool } from "@/components/CanvasComponent";
 import { getPastDrawings } from "@/lib/apiClient";
-import { EllipseSchemaType, RectSchemaType } from "@repo/common/types";
+import { EllipseSchemaType, LineSchemaType, RectSchemaType } from "@repo/common/types";
 
 export class Draw {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private roomId: string;
-  private existingShapes: (RectSchemaType | EllipseSchemaType)[];
+  private existingShapes: (RectSchemaType | EllipseSchemaType | LineSchemaType)[];
   private socket: WebSocket;
   private startX: number = 0;
   private startY: number = 0;
@@ -34,7 +34,6 @@ export class Draw {
 
   intiHandler() {
     this.socket.onmessage = (event) => {
-      console.log(event.data);
       const message = JSON.parse(event.data);
 
       if (message.type === "chat") {
@@ -80,6 +79,13 @@ export class Draw {
             0,
             2 * Math.PI
           );
+          this.ctx.strokeStyle = "#fff";
+          this.ctx.stroke();
+        }
+        else if(this.currTool === 'line'){
+          this.ctx.beginPath(),
+          this.ctx.moveTo(this.startX,this.startY);
+          this.ctx.lineTo(e.clientX,e.clientY);
           this.ctx.strokeStyle = "#fff";
           this.ctx.stroke();
         }
@@ -129,6 +135,22 @@ export class Draw {
             chat: JSON.stringify(ellipse),
           })
         );
+      } else if (this.currTool === "line") {
+        const line : LineSchemaType = {
+          type : 'line',
+          x : this.startX,
+          y : this.startY,
+          endX : e.clientX,
+          endY : e.clientY,
+        }
+        this.existingShapes.push(line);
+        this.socket.send(
+          JSON.stringify({
+            type: "chat",
+            roomId: this.roomId,
+            chat: JSON.stringify(line),
+          })
+        );
       }
     });
   }
@@ -153,6 +175,13 @@ export class Draw {
           shape.startAngle,
           shape.endAngle
         );
+        this.ctx.strokeStyle = "#fff";
+        this.ctx.stroke();
+      }
+      if(shape.type === 'line'){
+        this.ctx.beginPath();
+        this.ctx.moveTo(shape.x,shape.y);
+        this.ctx.lineTo(shape.endX,shape.endY);
         this.ctx.strokeStyle = "#fff";
         this.ctx.stroke();
       }
