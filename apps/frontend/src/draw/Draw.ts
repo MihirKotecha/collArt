@@ -28,12 +28,11 @@ export class Draw {
 
   async init() {
     this.existingShapes = await getPastDrawings(this.roomId);
-    console.log(this.existingShapes);
     this.clearCanvas();
   }
 
   intiHandler() {
-    this.socket.onmessage = (event) => {
+    this.socket.addEventListener('message' ,(event) => {
       const message = JSON.parse(event.data);
 
       if (message.type === "chat") {
@@ -41,7 +40,7 @@ export class Draw {
         this.existingShapes.push(shape);
         this.clearCanvas();
       }
-    };
+    });
 
     window.addEventListener("resize", () => {
       this.canvas.width = window.innerWidth;
@@ -161,7 +160,6 @@ export class Draw {
     this.ctx.strokeStyle = "#fff";
     this.existingShapes.forEach((shape) => {
       if (shape.type === "rect") {
-        if (this.ctx == null) console.log("something");
         this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
       }
       if (shape.type === "ellipse") {

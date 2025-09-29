@@ -9,7 +9,7 @@ export const useSocket = (roomId: string) => {
         ws.onopen = () => {
             setSocket(ws);
             setIsLoading(false);
-            socket?.send(JSON.stringify({
+            ws.send(JSON.stringify({
                 type: 'joinRoom',
                 roomId : roomId
             }));
