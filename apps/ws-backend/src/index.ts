@@ -47,8 +47,8 @@ wss.on("connection", (ws, request) => {
     let message;
     try {
       message = JSON.parse(data.toString());
-    } catch {
-      ws.send("Invalid message format");
+    } catch (e){
+      ws.send(`${e}`);
       return;
     }
 
@@ -66,7 +66,7 @@ wss.on("connection", (ws, request) => {
         handleLeaveRoom(ws, users, result.data);
         break;
       case "chat":
-        handleChat(ws, userId, result.data);
+        handleChat(ws, userId, result.data,users);
         break;
       default:
         ws.send("Unknown message type");

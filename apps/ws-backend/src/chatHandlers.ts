@@ -41,7 +41,7 @@ export function handleLeaveRoom(ws: WebSocket, users: User[], data: any) {
   }
 }
 
-export function handleChat(ws: WebSocket, userId: string, data: any) {
+export function handleChat(ws: WebSocket, userId: string, data: any, users: User[]) {
   const room = data.roomId;
   const chat = data.chat;
 
@@ -49,6 +49,17 @@ export function handleChat(ws: WebSocket, userId: string, data: any) {
     ws.send('Invalid Content');
     return;
   }
+
+  users.forEach((user) => {
+    if(user.rooms.includes(room) && user.id != userId){
+      user.ws.send(JSON.stringify({
+        type: 'chat',
+        roomId : room,
+        chat : chat
+      }));
+    }
+  })
+  
 
   addToQueue({ chat, userId, roomId: room });
 }
