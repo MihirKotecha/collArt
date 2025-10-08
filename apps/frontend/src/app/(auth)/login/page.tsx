@@ -1,36 +1,33 @@
 "use client"
 
 import { useState, FormEvent } from 'react';
-import { Palette, Mail, Lock, User, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import { Palette, Mail, Lock, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
 
-interface SignUpProps {
-  onNavigate: (page: 'landing' | 'login') => void;
+interface LoginProps {
+  onNavigate: (page: 'landing' | 'signup') => void;
   onSuccess: () => void;
 }
 
-export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
-  const [fullName, setFullName] = useState('');
+export default function Login({ onNavigate, onSuccess }: LoginProps) {
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const {signUp,loading} = useAuth();
-  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
+
+    if (error) {
+      setError('');
+      setLoading(false);
+    } else {
+      onSuccess();
     }
-
-
-    const token = await signUp(email,password,fullName);
-    console.log(token);
-    router.push('/dashboard');
   };
 
   return (
@@ -53,8 +50,8 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Create your account</h1>
-            <p className="text-slate-600">Start collaborating in seconds</p>
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Welcome back</h1>
+            <p className="text-slate-600">Sign in to continue creating</p>
           </div>
 
           {error && (
@@ -65,24 +62,6 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-semibold text-slate-700 mb-2">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  className="w-full pl-11 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all"
-                  placeholder="John Doe"
-                />
-              </div>
-            </div>
-
             <div>
               <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
                 Email Address
@@ -117,10 +96,6 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
                   placeholder="••••••••"
                 />
               </div>
-              <p className="mt-2 text-xs text-slate-500 flex items-center space-x-1">
-                <CheckCircle className="w-3 h-3" />
-                <span>Minimum 6 characters</span>
-              </p>
             </div>
 
             <button
@@ -128,25 +103,25 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
               disabled={loading}
               className="w-full py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold transition-all hover:shadow-lg hover:shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
           <div className="mt-8 text-center">
             <p className="text-slate-600">
-              Already have an account?{' '}
+              Don't have an account?{' '}
               <button
-                onClick={() => onNavigate('login')}
+                onClick={() => onNavigate('signup')}
                 className="text-blue-600 hover:text-blue-700 font-semibold hover:underline"
               >
-                Sign in
+                Sign up
               </button>
             </p>
           </div>
         </div>
 
         <p className="text-center text-slate-500 text-sm mt-6">
-          By creating an account, you agree to our Terms of Service and Privacy Policy.
+          By continuing, you agree to our Terms of Service and Privacy Policy.
         </p>
       </div>
     </div>

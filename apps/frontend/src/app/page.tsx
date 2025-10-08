@@ -1,102 +1,147 @@
-import Image from "next/image";
+"use client"
+
+import { Palette, Users, Zap, Layers, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const router = useRouter();
+
+  const onNavigate = (path: string) => {
+    router.push(path);
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+      <nav className="border-b border-slate-200 bg-white/80 backdrop-blur-sm fixed w-full z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <Palette className="w-8 h-8 text-blue-600" />
+              <span className="text-2xl font-bold text-slate-900">collArt</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => onNavigate('login')}
+                className="px-4 py-2 text-slate-700 hover:text-slate-900 font-medium transition-colors"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => onNavigate('signup')}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-all hover:shadow-lg hover:shadow-blue-500/30"
+              >
+                Sign Up
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="pt-24 pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 leading-tight">
+              Create together,
+              <br />
+              <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                design in real-time
+              </span>
+            </h1>
+            <p className="text-xl md:text-2xl text-slate-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+              Collaborative whiteboarding made simple. Draw, sketch, and brainstorm with your team in real-time.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                onClick={() => onNavigate('signup')}
+                className="group px-8 py-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-lg transition-all hover:shadow-xl hover:shadow-blue-500/30 flex items-center space-x-2"
+              >
+                <span>Start Creating Free</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button
+                onClick={() => onNavigate('login')}
+                className="px-8 py-4 bg-white text-slate-700 rounded-xl hover:bg-slate-50 font-semibold text-lg transition-all border-2 border-slate-200 hover:border-slate-300"
+              >
+                Watch Demo
+              </button>
+            </div>
+          </div>
+
+          <div className="relative mb-20">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 blur-3xl"></div>
+            <div className="relative bg-white rounded-2xl shadow-2xl p-8 border border-slate-200">
+              <div className="aspect-video bg-gradient-to-br from-slate-100 to-slate-200 rounded-xl flex items-center justify-center">
+                <div className="text-center">
+                  <Palette className="w-20 h-20 text-slate-400 mx-auto mb-4" />
+                  <p className="text-slate-500 text-lg">Your canvas awaits</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-20">
+            <div className="bg-white rounded-xl p-8 shadow-lg border border-slate-200 hover:shadow-xl transition-shadow">
+              <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                <Users className="w-7 h-7 text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Real-time Collaboration</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Work seamlessly with your team. See changes instantly as multiple people draw and edit together.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-8 shadow-lg border border-slate-200 hover:shadow-xl transition-shadow">
+              <div className="w-14 h-14 bg-cyan-100 rounded-xl flex items-center justify-center mb-6">
+                <Zap className="w-7 h-7 text-cyan-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Lightning Fast</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Built for speed. No lag, no delays. Your ideas flow from mind to canvas instantaneously.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-8 shadow-lg border border-slate-200 hover:shadow-xl transition-shadow">
+              <div className="w-14 h-14 bg-slate-100 rounded-xl flex items-center justify-center mb-6">
+                <Layers className="w-7 h-7 text-slate-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Powerful Tools</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Everything you need to bring ideas to life. Shapes, text, drawing tools, and more.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl p-12 text-center text-white shadow-2xl">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Ready to transform your ideas?
+            </h2>
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+              Join thousands of teams already creating amazing things with collArt.
+            </p>
+            <button
+              onClick={() => onNavigate('signup')}
+              className="px-10 py-4 bg-white text-blue-600 rounded-xl hover:bg-blue-50 font-bold text-lg transition-all hover:shadow-xl inline-flex items-center space-x-2"
+            >
+              <span>Get Started Now</span>
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="border-t border-slate-200 bg-white mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+              <Palette className="w-6 h-6 text-blue-600" />
+              <span className="text-xl font-bold text-slate-900">collArt</span>
+            </div>
+            <p className="text-slate-600">
+              © 2025 collArt. Collaborative creativity unleashed.
+            </p>
+          </div>
+        </div>
       </footer>
     </div>
   );
