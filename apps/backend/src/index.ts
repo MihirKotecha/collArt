@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import jwt from "jsonwebtoken";
 import cors from "cors";
 import { authMidddleWare } from "./middleware";
@@ -8,61 +8,101 @@ import {
   SignInSchema,
   SignUpSchema,
 } from "@repo/common/types";
-import { dbClient } from "@repo/db/client";
+import { dbClient, Prisma } from "@repo/db/client";
+import bcrypt from "bcrypt";
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
-app.post("/signup", async (req: Request, res: Response) => {
+const SALT_ROUNDS = 10;
+
+app.post("/signup", async (req, res) => {
   const result = SignUpSchema.safeParse(req.body);
   if (!result.success) {
-    res.status(400).json(result.error);
-    return;
+    res
+      .status(400)
+      .json({ message: "Invalid input", errors: result.error.flatten() });
   }
+
   try {
+    const { name, email, password } = result.data!;
+
+    // 2. Hash the password for security before storing it
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+    // 3. Create the user in the database
     const user = await dbClient.user.create({
       data: {
-        name: result.data.name,
-        email: result.data.email,
-        password: result.data.password,
+        name,
+        email,
+        password: hashedPassword,
       },
     });
-    console.log("User created:", user);
+
+    // 4. Generate JWT
     const token = jwt.sign({ userId: user.id }, JWT_TOKEN);
-    res.json({
+
+    res.status(201).json({
+      message: "User created successfully!",
       token,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Internal server error" });
-    return;
+    // Add specific error handling for known database issues
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // Check for unique constraint violation (e.g., duplicate email)
+      if (error.code === "P2002") {
+        res
+          .status(409) // 409 Conflict is more appropriate than 400 or 500
+          .json({ message: "A user with this email already exists." });
+      }
+    }
+
+    // Fallback for any other unexpected errors
+    console.error("Signup Error:", error); // Use console.error for logging errors
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 });
 
 app.post("/signin", async (req, res) => {
-  const userDetails = req.body;
-  const result = SignInSchema.safeParse(userDetails);
+  // 1. Validate input
+  const result = SignInSchema.safeParse(req.body);
   if (!result.success) {
-    res.status(400).json(result.error);
-    return;
+    res
+      .status(400)
+      .json({ message: "Invalid input", errors: result.error.flatten() });
   }
+
   try {
+    const { email, password } = result.data!;
+
     const user = await dbClient.user.findUnique({
-      where: {
-        email: result.data.email,
-      },
+      where: { email },
     });
-    if (!user || user.password !== result.data.password) {
-      res.status(401).json({ error: "Invalid credentials" });
+
+    if (!user) {
+      res.status(401).json({ message: "Invalid credentials" });
       return;
     }
-    const token = jwt.sign({ userId: user.id }, JWT_TOKEN);
-    res.json({ token });
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      // If passwords don't match, send back the SAME error as user not found
+      res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ userId: user.id }, JWT_TOKEN, { expiresIn: "1d" });
+
+    res.json({
+      message: "Signed in successfully!",
+      token,
+    });
+    
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-    return;
+    console.error("Signin Error:", error); // Log the actual error on the server
+    res.status(500).json({ message: "An internal server error occurred." });
   }
 });
 
@@ -107,16 +147,16 @@ app.get("/chat/:roomId", authMidddleWare, async (req, res) => {
         roomId: roomId,
       },
       orderBy: {
-        id : 'desc'
+        id: "desc",
       },
-      take : 50
+      take: 50,
     });
     res.json({
-      chats: chatHistory
+      chats: chatHistory,
     });
   } catch (error) {
     res.status(500).json({
-      message : "Internal Server Error"
+      message: "Internal Server Error",
     });
   }
 });
