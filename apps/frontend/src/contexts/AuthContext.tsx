@@ -24,13 +24,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 email,
                 password
             });
-            const token = response.data;
+            const token = response.data.token;
             localStorage.setItem('accessToken',token)
             setLoading(false);
             return token;
         } catch (error) {
             setLoading(false);
-            return('error');
+            throw error;
         }
     };
 

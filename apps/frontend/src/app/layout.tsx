@@ -1,5 +1,6 @@
+import "@repo/tailwind-config/globalCss"
+import { ErrorToaster } from "@repo/ui/sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
-import "./globals.css";
 
 
 export default function RootLayout({
@@ -10,7 +11,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <ErrorToaster />
+        </AuthProvider>
       </body>
     </html>
   );

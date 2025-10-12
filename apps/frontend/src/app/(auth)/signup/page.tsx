@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import { Palette, Mail, Lock, User, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { errorToast } from '@repo/ui/sonner';
 
 interface SignUpProps {
   onNavigate: (page: 'landing' | 'login') => void;
@@ -15,7 +16,7 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const {signUp,loading} = useAuth();
+  const { signUp, loading } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -28,9 +29,14 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
     }
 
 
-    const token = await signUp(email,password,fullName);
-    console.log(token);
-    router.push('/dashboard');
+    try {
+      const token = await signUp(email, password, fullName);
+      console.log(token);
+      router.push('/dashboard');
+
+    } catch (error) {
+      errorToast("Something went wrong");
+    }
   };
 
   return (
