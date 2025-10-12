@@ -17,7 +17,6 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { signUp, loading } = useAuth();
-  const router = useRouter();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -28,14 +27,14 @@ export default function SignUp({ onNavigate, onSuccess }: SignUpProps) {
       return;
     }
 
-
-    try {
-      const token = await signUp(email, password, fullName);
-      console.log(token);
-      router.push('/dashboard');
-
-    } catch (error) {
-      errorToast("Something went wrong");
+    const { token, error } = await signUp(email, password, fullName);
+    if (typeof (token) != "string") {
+      if (error != null) {
+        errorToast(error);
+      }
+      else {
+        errorToast("Something went wrong!!");
+      }
     }
   };
 

@@ -1,40 +1,72 @@
 "use client"
 
-import axios from 'axios';
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import axios, { isAxiosError } from 'axios';
+import { useRouter } from 'next/navigation';
+import { createContext, useContext, useState, ReactNode } from 'react';
+import Cookies from 'js-cookie';
 
 interface AuthContextType {
     loading: boolean;
-    signUp: (email: string, password: string, fullName: string) => void;
-    signIn: (email: string, password: string) => void;
+    signUp: (email: string, password: string, fullName: string) => Promise<{ token: null | string; error: null | string }>;
+    signIn: (email: string, password: string) => Promise<{ token: null | string; error: null | string }>;
     signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const apiClient = axios.create({
+    baseURL: 'http://localhost:4000'
+})
+
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
-
-    const signUp = async (email: string, password: string, fullName: string) => {
+    const signUp = async (email: string, password: string, fullName: string): Promise<{ token: null | string; error: null | string }> => {
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:4000/signup', {
+            const response = await apiClient.post('/signup', {
                 name: fullName,
                 email,
-                password
+                password,
             });
+
             const token = response.data.token;
-            localStorage.setItem('accessToken',token)
-            setLoading(false);
-            return token;
+            Cookies.set('accessToken',token);
+            router.push('/dashboard');
+            return {token,error : null}; // Return token on success
         } catch (error) {
+            let errorMessage = "An unexpected error occurred. Please try again."; // Default error message
+            if (isAxiosError(error)) {
+                errorMessage = error.response?.data?.message || errorMessage;
+            }
+            return {token : null,error : errorMessage}
+        } finally {
             setLoading(false);
-            throw error;
         }
     };
 
-    const signIn = async (email: string, password: string) => {
+    const signIn = async (email: string, password: string): Promise<{ token: null | string; error: null | string }> => {
+        setLoading(true);
+        try {
+            const response = await apiClient.post('/signin', {
+                email,
+                password,
+            });
+
+            const token = response.data.token;
+            Cookies.set('accessToken',token);
+            router.push('/dashboard');
+            return {token,error : null}; // Return token on success
+        } catch (error) {
+            let errorMessage = "An unexpected error occurred. Please try again."; // Default error message
+            if (isAxiosError(error)) {
+                errorMessage = error.response?.data?.message || errorMessage;
+            }
+            return {token : null,error : errorMessage}
+        } finally {
+            setLoading(false);
+        }
     };
 
     const signOut = async () => {

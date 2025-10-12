@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { Palette, Mail, Lock, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { errorToast } from '@repo/ui/sonner';
 
 interface LoginProps {
   onNavigate: (page: 'landing' | 'signup') => void;
@@ -10,23 +11,24 @@ interface LoginProps {
 }
 
 export default function Login({ onNavigate, onSuccess }: LoginProps) {
-  const { signIn } = useAuth();
+  const { signIn, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
 
-    if (error) {
-      setError('');
-      setLoading(false);
-    } else {
-      onSuccess();
+    const { token, error } = await signIn(email, password);
+    if (typeof (token) != "string") {
+      if (error != null) {
+        errorToast(error);
+      }
+      else {
+        errorToast("Something went wrong!!");
+      }
     }
   };
 
