@@ -10,11 +10,13 @@ import {
 } from "@repo/common/types";
 import { dbClient, Prisma } from "@repo/db/client";
 import bcrypt from "bcrypt";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 
 const SALT_ROUNDS = 10;
 
@@ -99,7 +101,6 @@ app.post("/signin", async (req, res) => {
       message: "Signed in successfully!",
       token,
     });
-    
   } catch (error) {
     console.error("Signin Error:", error); // Log the actual error on the server
     res.status(500).json({ message: "An internal server error occurred." });
@@ -135,6 +136,31 @@ app.post("/room", authMidddleWare, async (req, res) => {
     });
     console.error("Error creating room:", error);
     return;
+  }
+});
+
+app.get("/rooms", authMidddleWare, async (req, res) => {
+  //@ts-ignore
+  const userId = req.userId;
+
+  try {
+    const rooms = await dbClient.room.findMany({
+      where: {
+        adminId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.json({
+      rooms,
+    });
+  } catch (error) {
+    console.error("Error fetching rooms:", error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
   }
 });
 

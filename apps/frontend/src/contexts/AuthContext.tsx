@@ -15,7 +15,8 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const apiClient = axios.create({
-    baseURL: 'http://localhost:4000'
+    baseURL: 'http://localhost:4000',
+    withCredentials: true
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {

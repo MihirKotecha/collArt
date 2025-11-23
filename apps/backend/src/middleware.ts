@@ -8,14 +8,14 @@ export const authMidddleWare = async (
   res: Response,
   next: NextFunction
 ) => {
-  const token = req.headers["authorization"] || "";
+  const token = req.cookies.accessToken || "";
 
   const decoded = jwt.verify(token, JWT_TOKEN);
 
   if (decoded && typeof decoded !== "string") {
     try {
       const user = await dbClient.user.findUnique({
-        where: { id : decoded.userId},
+        where: { id: decoded.userId },
       });
       if (user) {
         //@ts-ignore

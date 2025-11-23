@@ -15,6 +15,10 @@ export const CreateRoomSchema = z.object({
   name: z.string().min(3).max(50),
 });
 
+export const GetRoomsSchema = z.object({
+  email: z.email(),
+})
+
 export const WsServerMessageSchema = z.object({
   type: z.enum(["joinRoom", "leaveRoom", "chat"]),
   roomId: z.string().optional(),
