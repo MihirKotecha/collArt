@@ -35,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const token = response.data.token;
             Cookies.set('accessToken',token);
             router.push('/dashboard');
+            router.refresh();
             return {token,error : null}; // Return token on success
         } catch (error) {
             let errorMessage = "An unexpected error occurred. Please try again."; // Default error message
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const token = response.data.token;
             Cookies.set('accessToken',token);
             router.push('/dashboard');
+            router.refresh();
             return {token,error : null}; // Return token on success
         } catch (error) {
             let errorMessage = "An unexpected error occurred. Please try again."; // Default error message
