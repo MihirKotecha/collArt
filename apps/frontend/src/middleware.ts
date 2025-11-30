@@ -5,7 +5,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("accessToken")?.value;
   const { pathname } = request.nextUrl;
 
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/";
 
   // SCENARIO 1: User has a token (is authenticated)
   if (token) {
@@ -34,5 +34,6 @@ export const config = {
     "/dashboard/:path*", // Use :path* to protect nested dashboard routes
     "/login",
     "/signup",
+    "/"
   ],
 };
