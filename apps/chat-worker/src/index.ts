@@ -7,18 +7,21 @@ const connection: RedisOptions = {
 };
 
 export const chatWorker = new Worker(
-  'chat-queue',
+  "chat-queue",
   async (job: Job) => {
     console.log(`worker working...`);
-    const message = await dbClient.chat.create({
-      data: {
-        roomId: job.data.roomId,
-        message: job.data.chat,
-        userId: job.data.userId,
-      },
-    });
-
-    console.log(`message written to db: ${message.message}`);
+    try {
+      const message = await dbClient.chat.create({
+        data: {
+          roomId: job.data.roomId,
+          message: job.data.chat,
+          userId: job.data.userId,
+        },
+      });
+      console.log(`message written to db: ${message.message}`);
+    } catch (error) {
+      console.log('error in writting to db: ',error);
+    }
   },
   { connection }
 );

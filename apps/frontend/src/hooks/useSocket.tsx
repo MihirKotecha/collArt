@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
 
 export const useSocket = (roomId: string) => {
     const [isLoading, setIsLoading] = useState(true);
     const [socket, setSocket] = useState<WebSocket | null>(null);
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8080?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIyMjFjYjcxMC04ZDgyLTQ0ZDItOTExYi05OGMxMzgwZTIxNGYiLCJpYXQiOjE3NTcyMzM4ODl9.DAgNaGwZHlgrAbELDOnhuu0NTQcSY2vNEu7m9bAKd5Y");
+        const token = Cookies.get("accessToken"); 
+        const ws = new WebSocket(`ws://localhost:8080?token=${token}`);
         ws.onopen = () => {
             setSocket(ws);
             setIsLoading(false);
