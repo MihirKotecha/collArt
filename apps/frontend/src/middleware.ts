@@ -34,6 +34,7 @@ export const config = {
     "/dashboard/:path*", // Use :path* to protect nested dashboard routes
     "/login",
     "/signup",
-    "/"
+    "/",
+    "/room/:path*"
   ],
 };
