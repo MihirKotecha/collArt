@@ -1,15 +1,26 @@
 import { Tool } from "@/components/CanvasComponent";
 import { getPastDrawings } from "@/lib/apiClient";
-import { EllipseSchemaType, LineSchemaType, RectSchemaType } from "@repo/common/types";
+import {
+  EllipseSchemaType,
+  LineSchemaType,
+  RectSchemaType,
+} from "@repo/common/types";
 
 export class Draw {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private roomId: string;
-  private existingShapes: (RectSchemaType | EllipseSchemaType | LineSchemaType)[];
+  private existingShapes: (
+    | RectSchemaType
+    | EllipseSchemaType
+    | LineSchemaType
+  )[];
   private socket: WebSocket;
   private startX: number = 0;
   private startY: number = 0;
+  private viewPortTransform: any = { x: 0, y: 0, scale: 1 };
+  private prevX: number = 0;
+  private prevY: number = 0;
   private clicked: boolean = false;
   private currTool: Tool = "rect";
 
@@ -32,7 +43,7 @@ export class Draw {
   }
 
   intiHandler() {
-    this.socket.addEventListener('message' ,(event) => {
+    this.socket.addEventListener("message", (event) => {
       const message = JSON.parse(event.data);
 
       if (message.type === "chat") {
@@ -52,16 +63,23 @@ export class Draw {
   initMouseHandlers() {
     this.canvas.addEventListener("mousedown", (e) => {
       this.clicked = true;
-      this.startX = e.clientX;
-      this.startY = e.clientY;
+      const world = this.screenToWorld(e.clientX, e.clientY);
+      this.startX = world.x;
+      this.startY = world.y;
+
+      if (this.currTool === "pan") {
+        this.prevX = e.clientX;
+        this.prevY = e.clientY;
+      }
     });
 
     this.canvas.addEventListener("mousemove", (e) => {
       if (this.clicked) {
-        const width = e.clientX - this.startX;
-        const height = e.clientY - this.startY;
-        const midX = (e.clientX + this.startX) / 2;
-        const midY = (e.clientY + this.startY) / 2;
+        const world = this.screenToWorld(e.clientX, e.clientY);
+        const width = world.x - this.startX;
+        const height = world.y - this.startY;
+        const midX = (world.x + this.startX) / 2;
+        const midY = (world.y + this.startY) / 2;
         const radiusX = width / 2;
         const radiusY = height / 2;
         this.clearCanvas();
@@ -80,21 +98,31 @@ export class Draw {
           );
           this.ctx.strokeStyle = "#fff";
           this.ctx.stroke();
-        }
-        else if(this.currTool === 'line'){
-          this.ctx.beginPath(),
-          this.ctx.moveTo(this.startX,this.startY);
-          this.ctx.lineTo(e.clientX,e.clientY);
+        } else if (this.currTool === "line") {
+          this.ctx.beginPath(), this.ctx.moveTo(this.startX, this.startY);
+          this.ctx.lineTo(e.clientX, e.clientY);
           this.ctx.strokeStyle = "#fff";
           this.ctx.stroke();
+        } else if (this.currTool === "pan") {
+          const dx = e.clientX - this.prevX;
+          const dy = e.clientY - this.prevY;
+
+          this.viewPortTransform.x += dx;
+          this.viewPortTransform.y += dy;
+
+          this.prevX = e.clientX;
+          this.prevY = e.clientY;
+
+          this.clearCanvas();
         }
       }
     });
 
     this.canvas.addEventListener("mouseup", (e) => {
       this.clicked = false;
-      const width = e.clientX - this.startX;
-      const height = e.clientY - this.startY;
+      const world = this.screenToWorld(e.clientX, e.clientY);
+      const width = world.x - this.startX;
+      const height = world.y - this.startY;
       if (this.currTool === "rect") {
         const shape: RectSchemaType = {
           type: "rect",
@@ -112,8 +140,9 @@ export class Draw {
           })
         );
       } else if (this.currTool === "circle") {
-        const midX = (e.clientX + this.startX) / 2;
-        const midY = (e.clientY + this.startY) / 2;
+        const world = this.screenToWorld(e.clientX, e.clientY);
+        const midX = (world.x + this.startX) / 2;
+        const midY = (world.y + this.startY) / 2;
         const radiusX = Math.abs(width / 2);
         const radiusY = Math.abs(height / 2);
         const ellipse: EllipseSchemaType = {
@@ -135,13 +164,14 @@ export class Draw {
           })
         );
       } else if (this.currTool === "line") {
-        const line : LineSchemaType = {
-          type : 'line',
-          x : this.startX,
-          y : this.startY,
-          endX : e.clientX,
-          endY : e.clientY,
-        }
+        const world = this.screenToWorld(e.clientX, e.clientY);
+        const line: LineSchemaType = {
+          type: "line",
+          x: this.startX,
+          y: this.startY,
+          endX: world.x,
+          endY: world.y,
+        };
         this.existingShapes.push(line);
         this.socket.send(
           JSON.stringify({
@@ -155,8 +185,27 @@ export class Draw {
   }
 
   clearCanvas() {
+    // 1️⃣ Reset transform → SCREEN SPACE
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // 2️⃣ Clear full screen
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // 3️⃣ Draw background (SCREEN SPACE)
+    this.ctx.fillStyle = "#000"; // or whatever bg you want
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // 4️⃣ Apply camera transform → WORLD SPACE
+    this.ctx.setTransform(
+      this.viewPortTransform.scale,
+      0,
+      0,
+      this.viewPortTransform.scale,
+      this.viewPortTransform.x,
+      this.viewPortTransform.y
+    );
+
+    // 5️⃣ Draw shapes (WORLD SPACE)
     this.ctx.strokeStyle = "#fff";
     this.existingShapes.forEach((shape) => {
       if (shape.type === "rect") {
@@ -173,14 +222,12 @@ export class Draw {
           shape.startAngle,
           shape.endAngle
         );
-        this.ctx.strokeStyle = "#fff";
         this.ctx.stroke();
       }
-      if(shape.type === 'line'){
+      if (shape.type === "line") {
         this.ctx.beginPath();
-        this.ctx.moveTo(shape.x,shape.y);
-        this.ctx.lineTo(shape.endX,shape.endY);
-        this.ctx.strokeStyle = "#fff";
+        this.ctx.moveTo(shape.x, shape.y);
+        this.ctx.lineTo(shape.endX, shape.endY);
         this.ctx.stroke();
       }
     });
@@ -188,5 +235,12 @@ export class Draw {
 
   updateTool(tool: Tool) {
     this.currTool = tool;
+  }
+
+  screenToWorld(x: number, y: number) {
+    return {
+      x: (x - this.viewPortTransform.x) / this.viewPortTransform.scale,
+      y: (y - this.viewPortTransform.y) / this.viewPortTransform.scale,
+    };
   }
 }
