@@ -5,6 +5,7 @@ import {
   LineSchemaType,
   RectSchemaType,
 } from "@repo/common/types";
+import { Camera } from "./core/Camera";
 
 export class Draw {
   private canvas: HTMLCanvasElement;
@@ -18,11 +19,11 @@ export class Draw {
   private socket: WebSocket;
   private startX: number = 0;
   private startY: number = 0;
-  private viewPortTransform: any = { x: 0, y: 0, scale: 1 };
   private prevX: number = 0;
   private prevY: number = 0;
   private clicked: boolean = false;
   private currTool: Tool = "rect";
+  private camera: Camera;
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
@@ -32,6 +33,7 @@ export class Draw {
     this.roomId = roomId;
     this.existingShapes = [];
     this.socket = socket;
+    this.camera = new Camera();
     this.init();
     this.intiHandler();
     this.initMouseHandlers();
@@ -63,7 +65,7 @@ export class Draw {
   initMouseHandlers() {
     this.canvas.addEventListener("mousedown", (e) => {
       this.clicked = true;
-      const world = this.screenToWorld(e.clientX, e.clientY);
+      const world = this.camera.screenToWorld(e.clientX, e.clientY);
       this.startX = world.x;
       this.startY = world.y;
 
@@ -75,7 +77,7 @@ export class Draw {
 
     this.canvas.addEventListener("mousemove", (e) => {
       if (this.clicked) {
-        const world = this.screenToWorld(e.clientX, e.clientY);
+        const world = this.camera.screenToWorld(e.clientX, e.clientY);
         const width = world.x - this.startX;
         const height = world.y - this.startY;
         const midX = (world.x + this.startX) / 2;
@@ -99,16 +101,16 @@ export class Draw {
           this.ctx.strokeStyle = "#fff";
           this.ctx.stroke();
         } else if (this.currTool === "line") {
-          this.ctx.beginPath(), this.ctx.moveTo(this.startX, this.startY);
-          this.ctx.lineTo(e.clientX, e.clientY);
+          this.ctx.beginPath(), 
+          this.ctx.moveTo(this.startX, this.startY);
+          this.ctx.lineTo(world.x, world.y);
           this.ctx.strokeStyle = "#fff";
           this.ctx.stroke();
         } else if (this.currTool === "pan") {
           const dx = e.clientX - this.prevX;
           const dy = e.clientY - this.prevY;
 
-          this.viewPortTransform.x += dx;
-          this.viewPortTransform.y += dy;
+          this.camera.pan(dx, dy);
 
           this.prevX = e.clientX;
           this.prevY = e.clientY;
@@ -120,7 +122,7 @@ export class Draw {
 
     this.canvas.addEventListener("mouseup", (e) => {
       this.clicked = false;
-      const world = this.screenToWorld(e.clientX, e.clientY);
+      const world = this.camera.screenToWorld(e.clientX, e.clientY);
       const width = world.x - this.startX;
       const height = world.y - this.startY;
       if (this.currTool === "rect") {
@@ -140,7 +142,6 @@ export class Draw {
           })
         );
       } else if (this.currTool === "circle") {
-        const world = this.screenToWorld(e.clientX, e.clientY);
         const midX = (world.x + this.startX) / 2;
         const midY = (world.y + this.startY) / 2;
         const radiusX = Math.abs(width / 2);
@@ -164,7 +165,6 @@ export class Draw {
           })
         );
       } else if (this.currTool === "line") {
-        const world = this.screenToWorld(e.clientX, e.clientY);
         const line: LineSchemaType = {
           type: "line",
           x: this.startX,
@@ -197,12 +197,12 @@ export class Draw {
 
     // 4️⃣ Apply camera transform → WORLD SPACE
     this.ctx.setTransform(
-      this.viewPortTransform.scale,
+      this.camera.scale,
       0,
       0,
-      this.viewPortTransform.scale,
-      this.viewPortTransform.x,
-      this.viewPortTransform.y
+      this.camera.scale,
+      this.camera.x,
+      this.camera.y
     );
 
     // 5️⃣ Draw shapes (WORLD SPACE)
@@ -235,12 +235,5 @@ export class Draw {
 
   updateTool(tool: Tool) {
     this.currTool = tool;
-  }
-
-  screenToWorld(x: number, y: number) {
-    return {
-      x: (x - this.viewPortTransform.x) / this.viewPortTransform.scale,
-      y: (y - this.viewPortTransform.y) / this.viewPortTransform.scale,
-    };
   }
 }
