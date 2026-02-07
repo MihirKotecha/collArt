@@ -2,13 +2,14 @@
 
 import { Draw } from "@/draw/Draw";
 import { useSocket } from "@/hooks/useSocket";
+import { Hand } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface canvasComponentProps {
     roomId: string;
 }
 
-export type Tool = "rect" | "circle" | "line";
+export type Tool = "rect" | "circle" | "line" | "pan";
 
 export const CanvasComponent: React.FC<canvasComponentProps> = ({ roomId }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,6 +42,16 @@ export const CanvasComponent: React.FC<canvasComponentProps> = ({ roomId }) => {
     return (
         <div className="flex overflow-hidden">
             <div className="absolute h-10 left-1/2 top-0 -translate-x-1/2 mt-4 z-10 bg-[#232329] p-1 rounded-lg flex gap-4">
+                <button
+                    className={`h-full flex justify-center items-center aspect-square cursor-pointer text-white
+    ${currTool === "pan" ? "bg-[#403e6a]" : ""}
+    rounded-lg`}
+                    aria-label="Pan"
+                    onClick={() => updateShapte("pan")}
+                >
+                    <Hand size={20} strokeWidth={2} />
+                </button>
+
                 <button
                     className={`h-full flex justify-center items-center aspect-square cursor-pointer text-white ${currTool === "circle" ? "bg-[#403e6a]" : "none"} rounded-lg`}
                     aria-label="Circle"
