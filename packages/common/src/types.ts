@@ -19,11 +19,21 @@ export const GetRoomsSchema = z.object({
   email: z.email(),
 })
 
-export const WsServerMessageSchema = z.object({
-  type: z.enum(["joinRoom", "leaveRoom", "chat"]),
-  roomId: z.string().optional(),
-  chat: z.string().optional(),
-});
+export const WsServerMessageSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("joinRoom"),
+    roomId: z.string(),
+  }),
+  z.object({
+    type: z.literal("leaveRoom"),
+    roomId: z.string(), 
+  }),
+  z.object({
+    type: z.literal("chat"),
+    roomId: z.string(), 
+    chat: z.string(), 
+  }),
+]);
 
 export const RectSchema = z.object({
   type: z.literal("rect"),

@@ -8,9 +8,11 @@ import {
   handleLeaveRoom,
   handleChat
 } from "./chatHandlers";
+import { UserManager } from "./UserManager";
 
 
 const wss = new WebSocketServer({ port: 8080 });
+const userManager = UserManager.getInstance();
 
 function getUser(token: string): string | null {
   try {
@@ -40,6 +42,8 @@ wss.on("connection", (ws, request) => {
     return;
   }
 
+  userManager.addUser(ws, userId);
+
   ws.send(`Token received: ${token}`);
   users.push({ id: userId, ws, rooms: [] });
 
@@ -60,16 +64,15 @@ wss.on("connection", (ws, request) => {
 
     switch (result.data.type) {
       case "joinRoom":
-        handleJoinRoom(ws, users, result.data);
+        userManager.joinRoom(ws, result.data.roomId);
         break;
       case "leaveRoom":
-        handleLeaveRoom(ws, users, result.data);
+        userManager.leaveRoom(ws, result.data.roomId);
         break;
       case "chat":
-        handleChat(ws, userId, result.data,users);
+        userManager.broadcast(ws, userId, result.data.roomId, result.data.chat);
         break;
-      default:
-        ws.send("Unknown message type");
     }
   });
+  ws.on("close", () => userManager.removeUser(ws));
 });
