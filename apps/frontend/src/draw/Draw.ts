@@ -6,6 +6,7 @@ import {
   RectSchemaType,
 } from "@repo/common/types";
 import { Camera } from "./core/Camera";
+import { Renderer } from "./core/Renderer";
 
 export class Draw {
   private canvas: HTMLCanvasElement;
@@ -24,6 +25,7 @@ export class Draw {
   private clicked: boolean = false;
   private currTool: Tool = "rect";
   private camera: Camera;
+  private renderer: Renderer;
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
@@ -34,6 +36,7 @@ export class Draw {
     this.existingShapes = [];
     this.socket = socket;
     this.camera = new Camera();
+    this.renderer = new Renderer(this.canvas, this.ctx, this.camera);
     this.init();
     this.intiHandler();
     this.initMouseHandlers();
@@ -41,7 +44,8 @@ export class Draw {
 
   async init() {
     this.existingShapes = await getPastDrawings(this.roomId);
-    this.clearCanvas();
+    this.renderer.resetCanvas();
+    this.renderer.renderExistingShapes(this.existingShapes);
   }
 
   intiHandler() {
@@ -51,14 +55,16 @@ export class Draw {
       if (message.type === "chat") {
         const shape = JSON.parse(message.chat);
         this.existingShapes.push(shape);
-        this.clearCanvas();
+        this.renderer.resetCanvas();
+        this.renderer.renderExistingShapes(this.existingShapes);
       }
     });
 
     window.addEventListener("resize", () => {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
-      this.clearCanvas();
+      this.renderer.resetCanvas();
+      this.renderer.renderExistingShapes(this.existingShapes);
     });
   }
 
@@ -84,28 +90,16 @@ export class Draw {
         const midY = (world.y + this.startY) / 2;
         const radiusX = width / 2;
         const radiusY = height / 2;
-        this.clearCanvas();
+        
+        this.renderer.resetCanvas();
+        this.renderer.renderExistingShapes(this.existingShapes);
+        
         if (this.currTool === "rect")
-          this.ctx.strokeRect(this.startX, this.startY, width, height);
+          this.renderer.renderRect(this.startX, this.startY, width, height);
         else if (this.currTool === "circle") {
-          this.ctx.beginPath();
-          this.ctx.ellipse(
-            midX,
-            midY,
-            Math.abs(radiusX),
-            Math.abs(radiusY),
-            0,
-            0,
-            2 * Math.PI
-          );
-          this.ctx.strokeStyle = "#fff";
-          this.ctx.stroke();
+          this.renderer.renderEllipse(midX,midY,Math.abs(radiusX),Math.abs(radiusY));
         } else if (this.currTool === "line") {
-          this.ctx.beginPath(), 
-          this.ctx.moveTo(this.startX, this.startY);
-          this.ctx.lineTo(world.x, world.y);
-          this.ctx.strokeStyle = "#fff";
-          this.ctx.stroke();
+          this.renderer.renderLine(this.startX, this.startY, world.x, world.y);
         } else if (this.currTool === "pan") {
           const dx = e.clientX - this.prevX;
           const dy = e.clientY - this.prevY;
@@ -115,7 +109,8 @@ export class Draw {
           this.prevX = e.clientX;
           this.prevY = e.clientY;
 
-          this.clearCanvas();
+          this.renderer.resetCanvas();
+          this.renderer.renderExistingShapes(this.existingShapes);
         }
       }
     });
@@ -184,54 +179,7 @@ export class Draw {
     });
   }
 
-  clearCanvas() {
-    // 1️⃣ Reset transform → SCREEN SPACE
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // 2️⃣ Clear full screen
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // 3️⃣ Draw background (SCREEN SPACE)
-    this.ctx.fillStyle = "#000"; // or whatever bg you want
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // 4️⃣ Apply camera transform → WORLD SPACE
-    this.ctx.setTransform(
-      this.camera.scale,
-      0,
-      0,
-      this.camera.scale,
-      this.camera.x,
-      this.camera.y
-    );
-
-    // 5️⃣ Draw shapes (WORLD SPACE)
-    this.ctx.strokeStyle = "#fff";
-    this.existingShapes.forEach((shape) => {
-      if (shape.type === "rect") {
-        this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-      }
-      if (shape.type === "ellipse") {
-        this.ctx.beginPath();
-        this.ctx.ellipse(
-          shape.x,
-          shape.y,
-          shape.radiusX,
-          shape.radiusY,
-          shape.rotation,
-          shape.startAngle,
-          shape.endAngle
-        );
-        this.ctx.stroke();
-      }
-      if (shape.type === "line") {
-        this.ctx.beginPath();
-        this.ctx.moveTo(shape.x, shape.y);
-        this.ctx.lineTo(shape.endX, shape.endY);
-        this.ctx.stroke();
-      }
-    });
-  }
 
   updateTool(tool: Tool) {
     this.currTool = tool;
