@@ -7,6 +7,11 @@ import {
 } from "@repo/common/types";
 import { Camera } from "./core/Camera";
 import { Renderer } from "./core/Renderer";
+import { ShapeTool } from "./tools/Tool";
+import { PanTool } from "./tools/PanTool";
+import { RectTool } from "./tools/RectTool";
+import { CircleTool } from "./tools/CircleTool";
+import { LineTool } from "./tools/LineTool";
 
 export class Draw {
   private canvas: HTMLCanvasElement;
@@ -18,14 +23,11 @@ export class Draw {
     | LineSchemaType
   )[];
   private socket: WebSocket;
-  private startX: number = 0;
-  private startY: number = 0;
-  private prevX: number = 0;
-  private prevY: number = 0;
-  private clicked: boolean = false;
+  private isDrawing: boolean = false;
   private currTool: Tool = "rect";
   private camera: Camera;
   private renderer: Renderer;
+  private toolMap: Record<string, ShapeTool>;
 
   constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
@@ -37,6 +39,14 @@ export class Draw {
     this.socket = socket;
     this.camera = new Camera();
     this.renderer = new Renderer(this.canvas, this.ctx, this.camera);
+    
+    this.toolMap = {
+      rect: new RectTool(this.renderer),
+      circle: new CircleTool(this.renderer),
+      line: new LineTool(this.renderer),
+      pan: new PanTool(this.camera),
+    };
+
     this.init();
     this.intiHandler();
     this.initMouseHandlers();
@@ -70,111 +80,50 @@ export class Draw {
 
   initMouseHandlers() {
     this.canvas.addEventListener("mousedown", (e) => {
-      this.clicked = true;
+      this.isDrawing = true;
       const world = this.camera.screenToWorld(e.clientX, e.clientY);
-      this.startX = world.x;
-      this.startY = world.y;
+      const activeTool = this.toolMap[this.currTool as string];
 
-      if (this.currTool === "pan") {
-        this.prevX = e.clientX;
-        this.prevY = e.clientY;
+      if (activeTool) {
+        activeTool.onMouseDown(world.x, world.y, e.clientX, e.clientY);
       }
     });
 
     this.canvas.addEventListener("mousemove", (e) => {
-      if (this.clicked) {
+      if (this.isDrawing) {
         const world = this.camera.screenToWorld(e.clientX, e.clientY);
-        const width = world.x - this.startX;
-        const height = world.y - this.startY;
-        const midX = (world.x + this.startX) / 2;
-        const midY = (world.y + this.startY) / 2;
-        const radiusX = width / 2;
-        const radiusY = height / 2;
-        
+        const activeTool = this.toolMap[this.currTool as string];
+
         this.renderer.resetCanvas();
         this.renderer.renderExistingShapes(this.existingShapes);
-        
-        if (this.currTool === "rect")
-          this.renderer.renderRect(this.startX, this.startY, width, height);
-        else if (this.currTool === "circle") {
-          this.renderer.renderEllipse(midX,midY,Math.abs(radiusX),Math.abs(radiusY));
-        } else if (this.currTool === "line") {
-          this.renderer.renderLine(this.startX, this.startY, world.x, world.y);
-        } else if (this.currTool === "pan") {
-          const dx = e.clientX - this.prevX;
-          const dy = e.clientY - this.prevY;
 
-          this.camera.pan(dx, dy);
-
-          this.prevX = e.clientX;
-          this.prevY = e.clientY;
-
-          this.renderer.resetCanvas();
-          this.renderer.renderExistingShapes(this.existingShapes);
+        if (activeTool) {
+          activeTool.onMouseMove(world.x, world.y, e.clientX, e.clientY);
         }
       }
     });
 
     this.canvas.addEventListener("mouseup", (e) => {
-      this.clicked = false;
+      this.isDrawing = false;
       const world = this.camera.screenToWorld(e.clientX, e.clientY);
-      const width = world.x - this.startX;
-      const height = world.y - this.startY;
-      if (this.currTool === "rect") {
-        const shape: RectSchemaType = {
-          type: "rect",
-          x: this.startX,
-          y: this.startY,
-          width,
-          height,
-        };
-        this.existingShapes.push(shape);
-        this.socket.send(
-          JSON.stringify({
-            type: "chat",
-            roomId: this.roomId,
-            chat: JSON.stringify(shape),
-          })
-        );
-      } else if (this.currTool === "circle") {
-        const midX = (world.x + this.startX) / 2;
-        const midY = (world.y + this.startY) / 2;
-        const radiusX = Math.abs(width / 2);
-        const radiusY = Math.abs(height / 2);
-        const ellipse: EllipseSchemaType = {
-          type: "ellipse",
-          x: midX,
-          y: midY,
-          radiusX,
-          radiusY,
-          rotation: 0,
-          startAngle: 0,
-          endAngle: 2 * Math.PI,
-        };
-        this.existingShapes.push(ellipse);
-        this.socket.send(
-          JSON.stringify({
-            type: "chat",
-            roomId: this.roomId,
-            chat: JSON.stringify(ellipse),
-          })
-        );
-      } else if (this.currTool === "line") {
-        const line: LineSchemaType = {
-          type: "line",
-          x: this.startX,
-          y: this.startY,
-          endX: world.x,
-          endY: world.y,
-        };
-        this.existingShapes.push(line);
-        this.socket.send(
-          JSON.stringify({
-            type: "chat",
-            roomId: this.roomId,
-            chat: JSON.stringify(line),
-          })
-        );
+      const activeTool = this.toolMap[this.currTool as string];
+
+      if (activeTool) {
+        const newShape = activeTool.onMouseUp(world.x, world.y, e.clientX, e.clientY);
+        
+        if (newShape) {
+          this.existingShapes.push(newShape);
+          this.socket.send(
+            JSON.stringify({
+              type: "chat",
+              roomId: this.roomId,
+              chat: JSON.stringify(newShape),
+            })
+          );
+          
+          this.renderer.resetCanvas();
+          this.renderer.renderExistingShapes(this.existingShapes);
+        }
       }
     });
   }
