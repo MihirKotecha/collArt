@@ -8,7 +8,7 @@ import {
   handleLeaveRoom,
   handleChat
 } from "./chatHandlers";
-import { UserManager } from "./UserManager";
+import { UserManager } from "./userManager";
 
 
 const wss = new WebSocketServer({ port: 8080 });
